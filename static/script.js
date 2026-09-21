@@ -1,460 +1,464 @@
-const calculateBtn =
-    document.getElementById("calculateBtn");
+document.addEventListener("DOMContentLoaded", () => {
 
-const clearBtn =
-    document.getElementById("clearBtn");
+    const num1Input = document.getElementById("num1");
+    const num2Input = document.getElementById("num2");
+    const operationInput = document.getElementById("operation");
 
-const num1Input =
-    document.getElementById("num1");
+    const calculateBtn = document.getElementById("calculateBtn");
+    const clearBtn = document.getElementById("clearBtn");
 
-const num2Input =
-    document.getElementById("num2");
+    const resultBox = document.getElementById("resultBox");
+    const resultElement = document.getElementById("result");
 
-const operationInput =
-    document.getElementById("operation");
-
-const resultBox =
-    document.getElementById("resultBox");
-
-const resultElement =
-    document.getElementById("result");
-
-const errorBox =
-    document.getElementById("errorBox");
-
-const errorMessage =
-    document.getElementById("errorMessage");
+    const errorBox = document.getElementById("errorBox");
+    const errorMessage = document.getElementById("errorMessage");
 
 
+    /* --------------------------------
+       CALCULATE
+    -------------------------------- */
 
-calculateBtn.addEventListener("click", async () => {
-
-    resultBox.classList.add("hidden");
-
-    errorBox.classList.add("hidden");
-
-
-    const num1 =
-        num1Input.value.trim();
-
-    const num2 =
-        num2Input.value.trim();
-
-    const operation =
-        operationInput.value;
+    calculateBtn.addEventListener("click", calculate);
 
 
-    // Validate empty inputs
+    async function calculate() {
 
-    if (num1 === "" || num2 === "") {
+        hideError();
 
-        showError(
-            "Please enter both numbers."
-        );
-
-        return;
-    }
+        const num1 = num1Input.value.trim();
+        const num2 = num2Input.value.trim();
+        const operation = operationInput.value;
 
 
-    // Validate operation
+        /* Frontend validation */
 
-    if (operation === "") {
-
-        showError(
-            "Please select an operation."
-        );
-
-        return;
-    }
-
-
-    const number1 = Number(num1);
-
-    const number2 = Number(num2);
-
-
-    // Validate numbers
-
-    if (
-        !Number.isFinite(number1) ||
-        !Number.isFinite(number2)
-    ) {
-
-        showError(
-            "Please enter valid numbers."
-        );
-
-        return;
-    }
-
-
-    // Prevent division/modulus by zero
-
-    if (
-        (operation === "divide" ||
-         operation === "modulus") &&
-        number2 === 0
-    ) {
-
-        if (operation === "divide") {
-
-            showError(
-                "Cannot divide by zero."
-            );
-
-        } else {
-
-            showError(
-                "Cannot perform modulus by zero."
-            );
-
+        if (num1 === "") {
+            showError("Please enter the first number.");
+            num1Input.focus();
+            return;
         }
 
-        return;
-    }
+        if (num2 === "") {
+            showError("Please enter the second number.");
+            num2Input.focus();
+            return;
+        }
+
+        if (operation === "") {
+            showError("Please select an operation.");
+            operationInput.focus();
+            return;
+        }
 
 
-    try {
+        /* Prevent multiple requests */
 
-        const response =
-            await fetch("/calculate", {
+        calculateBtn.disabled = true;
+        calculateBtn.classList.add("loading");
+
+        calculateBtn.querySelector("span:first-child").textContent =
+            "Calculating...";
+
+
+        try {
+
+            /*
+             * Send calculation to Flask.
+             *
+             * Because this page is served by Flask,
+             * "/calculate" points to the same Flask server.
+             */
+
+            const response = await fetch("/calculate", {
 
                 method: "POST",
 
                 headers: {
-                    "Content-Type":
-                        "application/json"
+                    "Content-Type": "application/json"
                 },
 
                 body: JSON.stringify({
-
-                    num1: number1,
-
-                    num2: number2,
-
+                    num1: num1,
+                    num2: num2,
                     operation: operation
-
                 })
 
             });
 
 
-        const data =
-            await response.json();
+            /* Check HTTP response */
+
+            if (!response.ok) {
+
+                let errorData;
+
+                try {
+                    errorData = await response.json();
+                } catch {
+                    errorData = null;
+                }
+
+                throw new Error(
+                    errorData?.error ||
+                    `Server returned error ${response.status}.`
+                );
+            }
 
 
-        if (data.success) {
+            /* Convert response to JSON */
+
+            const data = await response.json();
+
+
+            if (!data.success) {
+                throw new Error(
+                    data.error || "Calculation failed."
+                );
+            }
+
+
+            /* Display result */
 
             resultElement.textContent =
-                data.result;
+                formatResult(data.result);
 
-            resultBox.classList.remove(
-                "hidden"
-            );
+            resultBox.classList.remove("hidden");
 
 
-            // Formal successful submission confirmation
+            /* Show success confirmation */
 
-            showSuccessConfirmation(
-                data.result
-            );
-
-
-        } else {
-
-            showError(data.error);
+            showSuccessConfirmation(data.result);
 
         }
 
-    } catch (error) {
 
-        showError(
-            "Unable to connect to the server."
-        );
+        catch (error) {
 
-        console.error(error);
-
-    }
-
-});
-
-
-
-clearBtn.addEventListener("click", () => {
-
-    num1Input.value = "";
-
-    num2Input.value = "";
-
-    operationInput.value = "";
-
-    resultElement.textContent = "0";
-
-    resultBox.classList.add("hidden");
-
-    errorBox.classList.add("hidden");
-
-});
-
-
-function showError(message) {
-
-    errorMessage.textContent =
-        message;
-
-    errorBox.classList.remove(
-        "hidden"
-    );
-
-}
-
-
-function showSuccessConfirmation(result) {
-
-    // Remove an existing confirmation if present
-
-    const existingOverlay =
-        document.querySelector(
-            ".success-overlay"
-        );
-
-    if (existingOverlay) {
-        existingOverlay.remove();
-    }
-
-
-
-    const overlay =
-        document.createElement("div");
-
-    overlay.className =
-        "success-overlay";
-
-
-    // confirmation content
-
-    const content =
-        document.createElement("div");
-
-    content.className =
-        "success-content";
-
-
-    content.innerHTML = `
-
-        <div class="success-icon">
-            <span class="success-check">✓</span>
-        </div>
-
-        <h2 class="success-title">
-            Calculation Successful
-        </h2>
-
-        <p class="success-message">
-            Your calculation has been completed
-            successfully. The result has been
-            generated and is ready for review.
-        </p>
-
-        <div class="success-result">
-            <span>Result</span>
-            <strong>${escapeHTML(result)}</strong>
-        </div>
-
-        <br>
-
-        <button
-            type="button"
-            class="success-close"
-            id="successCloseButton"
-        >
-            Continue
-        </button>
-
-    `;
-
-
-    overlay.appendChild(content);
-
-    document.body.appendChild(overlay);
-
-
-
-    createSuccessParticles();
-
-
-    // Continue button
-
-    const closeButton =
-        document.getElementById(
-            "successCloseButton"
-        );
-
-
-    closeButton.addEventListener(
-        "click",
-        () => {
-
-            closeSuccessConfirmation(
-                overlay
+            console.error(
+                "Calculation Error:",
+                error
             );
 
-        }
-    );
 
-
-    // Automatically close after 4 seconds
-
-    const autoClose =
-        setTimeout(() => {
+            /*
+             * This message specifically handles
+             * Flask connection problems.
+             */
 
             if (
-                document.body.contains(
-                    overlay
-                )
+                error instanceof TypeError ||
+                error.message.includes("Failed to fetch")
             ) {
 
-                closeSuccessConfirmation(
-                    overlay
+                showError(
+                    "Unable to connect to the server. Please make sure Flask is running."
+                );
+
+            } else {
+
+                showError(
+                    error.message
                 );
 
             }
 
-        }, 4000);
+        }
 
 
-    // Prevent unused timer reference
+        finally {
 
-    overlay.dataset.timer =
-        autoClose;
-}
+            calculateBtn.disabled = false;
 
+            calculateBtn.classList.remove("loading");
 
-function closeSuccessConfirmation(
-    overlay
-) {
-
-    overlay.classList.add(
-        "fade-out"
-    );
-
-
-    setTimeout(() => {
-
-        if (
-            document.body.contains(
-                overlay
-            )
-        ) {
-
-            overlay.remove();
+            calculateBtn.querySelector("span:first-child").textContent =
+                "Calculate";
 
         }
 
-    }, 450);
-
-}
+    }
 
 
-function createSuccessParticles() {
+    /* --------------------------------
+       FORMAT RESULT
+    -------------------------------- */
 
-    const particleCount = 22;
+    function formatResult(value) {
 
-    const particleColors = [
-        "#d9b8d2",
-        "#c5b8e2",
-        "#b9d9e8",
-        "#ead0b6",
-        "#c8dfd5"
-    ];
+        if (typeof value === "number") {
+
+            if (Number.isInteger(value)) {
+                return value.toString();
+            }
+
+            return Number(
+                value.toFixed(10)
+            ).toString();
+
+        }
+
+        return value;
+
+    }
 
 
-    for (
-        let i = 0;
-        i < particleCount;
-        i++
-    ) {
+    /* --------------------------------
+       SUCCESS CONFIRMATION
+    -------------------------------- */
 
-        setTimeout(() => {
+    function showSuccessConfirmation(result) {
+
+        const existingOverlay =
+            document.querySelector(".success-overlay");
+
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+
+
+        const overlay =
+            document.createElement("div");
+
+        overlay.className =
+            "success-overlay";
+
+
+        overlay.innerHTML = `
+
+            <div class="success-content">
+
+                <div class="success-icon">
+                    ✓
+                </div>
+
+                <h2 class="success-title">
+                    Calculation Successful
+                </h2>
+
+                <p class="success-message">
+                    Your calculation has been completed successfully.
+                </p>
+
+                <div class="success-result">
+                    Result:
+                    <strong>
+                        ${escapeHTML(formatResult(result))}
+                    </strong>
+                </div>
+
+                <button
+                    class="success-close"
+                    type="button"
+                >
+                    Continue
+                </button>
+
+            </div>
+
+        `;
+
+
+        document.body.appendChild(overlay);
+
+
+        createSuccessParticles(overlay);
+
+
+        const closeButton =
+            overlay.querySelector(".success-close");
+
+
+        closeButton.addEventListener(
+            "click",
+            () => {
+
+                overlay.classList.add("closing");
+
+                setTimeout(() => {
+                    overlay.remove();
+                }, 300);
+
+            }
+        );
+
+
+        /*
+         * Automatically close after 4 seconds.
+         */
+
+        const autoClose =
+            setTimeout(() => {
+
+                if (
+                    document.body.contains(overlay)
+                ) {
+
+                    overlay.classList.add(
+                        "closing"
+                    );
+
+                    setTimeout(() => {
+
+                        if (
+                            document.body.contains(
+                                overlay
+                            )
+                        ) {
+                            overlay.remove();
+                        }
+
+                    }, 300);
+
+                }
+
+            }, 4000);
+
+
+        closeButton.addEventListener(
+            "click",
+            () => clearTimeout(autoClose),
+            { once: true }
+        );
+
+    }
+
+
+    /* --------------------------------
+       SUCCESS PARTICLES
+    -------------------------------- */
+
+    function createSuccessParticles(overlay) {
+
+        for (let i = 0; i < 18; i++) {
 
             const particle =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("span");
 
             particle.className =
                 "success-particle";
 
-
-            // Random position
-
             particle.style.left =
-                Math.random() * 100 +
-                "vw";
+                `${Math.random() * 100}%`;
 
             particle.style.top =
-                55 +
-                Math.random() * 35 +
-                "vh";
+                `${Math.random() * 100}%`;
 
-
-            // Random size
-
-            const size =
-                4 +
-                Math.random() * 6;
-
-            particle.style.width =
-                size + "px";
-
-            particle.style.height =
-                size + "px";
-
-
-            // Random pastel color
-
-            particle.style.background =
-                particleColors[
-                    Math.floor(
-                        Math.random() *
-                        particleColors.length
-                    )
-                ];
-
-
-            // Slightly different animation
+            particle.style.animationDelay =
+                `${Math.random() * 0.8}s`;
 
             particle.style.animationDuration =
-                2.2 +
-                Math.random() * 1.5 +
-                "s";
+                `${2 + Math.random() * 2}s`;
 
+            overlay.appendChild(particle);
 
-            document.body.appendChild(
-                particle
-            );
-
-
-            setTimeout(() => {
-
-                particle.remove();
-
-            }, 4000);
-
-        }, i * 45);
+        }
 
     }
 
-}
+
+    /* --------------------------------
+       ERROR
+    -------------------------------- */
+
+    function showError(message) {
+
+        errorMessage.textContent =
+            message;
+
+        errorBox.classList.remove(
+            "hidden"
+        );
+
+        resultBox.classList.add(
+            "hidden"
+        );
+
+    }
 
 
-function escapeHTML(value) {
+    function hideError() {
 
-    const div =
-        document.createElement("div");
+        errorBox.classList.add(
+            "hidden"
+        );
 
-    div.textContent = value;
+    }
 
-    return div.innerHTML;
 
-}
+    /* --------------------------------
+       CLEAR
+    -------------------------------- */
+
+    clearBtn.addEventListener(
+        "click",
+        clearCalculator
+    );
+
+
+    function clearCalculator() {
+
+        num1Input.value = "";
+        num2Input.value = "";
+        operationInput.value = "";
+
+        resultElement.textContent = "0";
+
+        resultBox.classList.add(
+            "hidden"
+        );
+
+        errorBox.classList.add(
+            "hidden"
+        );
+
+        num1Input.focus();
+
+    }
+
+
+    /* --------------------------------
+       ENTER KEY SUPPORT
+    -------------------------------- */
+
+    num1Input.addEventListener(
+        "keydown",
+        handleEnter
+    );
+
+    num2Input.addEventListener(
+        "keydown",
+        handleEnter
+    );
+
+    operationInput.addEventListener(
+        "keydown",
+        handleEnter
+    );
+
+
+    function handleEnter(event) {
+
+        if (event.key === "Enter") {
+            calculate();
+        }
+
+    }
+
+
+    /* --------------------------------
+       SAFE HTML
+    -------------------------------- */
+
+    function escapeHTML(value) {
+
+        const div =
+            document.createElement("div");
+
+        div.textContent =
+            value;
+
+        return div.innerHTML;
+
+    }
+
+});

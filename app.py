@@ -15,30 +15,39 @@ def home():
 @app.route("/calculate", methods=["POST"])
 def calculate():
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         if not data:
             return jsonify({
                 "success": False,
-                "error": "No data received."
+                "error": "No calculation data received."
             }), 400
 
         num1 = data.get("num1")
         num2 = data.get("num2")
         operation = data.get("operation")
 
-        if num1 is None or num2 is None:
+        # Validate numbers
+        if num1 is None or num1 == "":
             return jsonify({
                 "success": False,
-                "error": "Please enter both numbers."
+                "error": "Please enter the first number."
             }), 400
 
+        if num2 is None or num2 == "":
+            return jsonify({
+                "success": False,
+                "error": "Please enter the second number."
+            }), 400
+
+        # Validate operation
         if not operation:
             return jsonify({
                 "success": False,
                 "error": "Please select an operation."
             }), 400
 
+        # Convert values to numbers
         try:
             num1 = float(num1)
             num2 = float(num2)
@@ -48,6 +57,7 @@ def calculate():
                 "error": "Please enter valid numbers."
             }), 400
 
+        # Perform calculation
         if operation == "add":
             result = num1 + num2
 
@@ -78,9 +88,10 @@ def calculate():
         else:
             return jsonify({
                 "success": False,
-                "error": "Invalid operation."
+                "error": "Invalid operation selected."
             }), 400
 
+        # Remove unnecessary .0 from whole numbers
         if result.is_integer():
             result = int(result)
 
@@ -89,14 +100,25 @@ def calculate():
             "result": result
         })
 
-    except Exception as e:
-        print("Error:", e)
+    except Exception as error:
+        print("Server Error:", error)
 
         return jsonify({
             "success": False,
-            "error": "An unexpected error occurred."
+            "error": "An unexpected server error occurred."
         }), 500
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("\n======================================")
+    print("       Calculator Flask Server")
+    print("======================================")
+    print("Server running at:")
+    print("http://127.0.0.1:5000")
+    print("======================================\n")
+
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=True
+    )

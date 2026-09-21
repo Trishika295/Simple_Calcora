@@ -2,40 +2,40 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <title>Simple Calculator</title>
 
-    <title>Pastel Calculator</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
-
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 </head>
 
 <body>
 
+    <!-- Background Decorations -->
     <div class="background-decoration decoration-one"></div>
     <div class="background-decoration decoration-two"></div>
     <div class="background-decoration decoration-three"></div>
 
 
+    <!-- Calculator -->
     <main class="calculator-container">
 
         <div class="calculator-card">
 
+            <!-- Header -->
             <div class="top-icons">
                 <span>♡</span>
                 <span>✦</span>
             </div>
 
-
             <div class="title-area">
 
                 <div class="calculator-icon">
-                    𝐌𝐀𝑻𝐇
+                    ✨
                 </div>
 
                 <h1>Simple Calculator</h1>
@@ -47,6 +47,7 @@
             </div>
 
 
+            <!-- First Number -->
             <div class="input-group">
 
                 <label for="num1">
@@ -55,7 +56,9 @@
 
                 <div class="input-wrapper">
 
-                    <span class="input-icon">①</span>
+                    <span class="input-icon">
+                        ①
+                    </span>
 
                     <input
                         type="number"
@@ -69,6 +72,7 @@
             </div>
 
 
+            <!-- Second Number -->
             <div class="input-group">
 
                 <label for="num2">
@@ -77,7 +81,9 @@
 
                 <div class="input-wrapper">
 
-                    <span class="input-icon">②</span>
+                    <span class="input-icon">
+                        ②
+                    </span>
 
                     <input
                         type="number"
@@ -91,6 +97,7 @@
             </div>
 
 
+            <!-- Operation -->
             <div class="input-group">
 
                 <label for="operation">
@@ -99,7 +106,9 @@
 
                 <div class="input-wrapper">
 
-                    <span class="input-icon">✧</span>
+                    <span class="input-icon">
+                        ✧
+                    </span>
 
                     <select id="operation">
 
@@ -134,39 +143,52 @@
             </div>
 
 
+            <!-- Buttons -->
             <div class="button-group">
 
-                <button id="calculateBtn"
-                        class="calculate-button">
+                <button
+                    id="calculateBtn"
+                    class="calculate-button"
+                    type="button"
+                >
 
-                    <span>Calculate</span>
-                    <span class="button-sparkle">✦</span>
+                    <span>
+                        Calculate
+                    </span>
+
+                    <span class="button-sparkle">
+                        ✦
+                    </span>
 
                 </button>
 
 
-                <button id="clearBtn"
-                        class="clear-button">
-
+                <button
+                    id="clearBtn"
+                    class="clear-button"
+                    type="button"
+                >
                     Clear
-
                 </button>
 
             </div>
 
 
-            <div id="resultBox"
-                 class="result-box hidden">
+            <!-- Result -->
+            <div
+                id="resultBox"
+                class="result-box hidden"
+            >
 
                 <div class="result-label">
                     YOUR RESULT
                 </div>
 
-                <div id="result"
-                     class="result-value">
-
+                <div
+                    id="result"
+                    class="result-value"
+                >
                     0
-
                 </div>
 
                 <div class="result-decoration">
@@ -176,16 +198,22 @@
             </div>
 
 
-            <div id="errorBox"
-                 class="error-box hidden">
+            <!-- Error -->
+            <div
+                id="errorBox"
+                class="error-box hidden"
+            >
 
-                <span>♡</span>
+                <span>
+                    ♡
+                </span>
 
                 <span id="errorMessage"></span>
 
             </div>
 
 
+            <!-- Footer -->
             <div class="footer-note">
                 Made with ✨ and a little bit of magic
             </div>
@@ -195,7 +223,10 @@
     </main>
 
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- JavaScript -->
+    <script
+        src="{{ url_for('static', filename='script.js') }}"
+    ></script>
 
 </body>
 
